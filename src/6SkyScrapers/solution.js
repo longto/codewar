@@ -65,7 +65,7 @@ const generate = arr =>{
 generate([]);
 //console.log(possible);
 
-function solvePuzzle(clues) {
+export function solvePuzzle(clues) {
   let [c1, r2, c2, r1] = split(clues, 6);
   r1 = r1.reverse();
   c2 = c2.reverse();
