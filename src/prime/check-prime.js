@@ -6,24 +6,3 @@ const isPrime = num => {
     if (num%cache[i]===0) return false;
   return true;
 }
-function findOutPrime(n, sn=`${n}`, divide=[]){
-  for(let len=sn.length;len>=1;len--) {
-    let max = 0;
-    for(i=0;i<=sn.length-len;i++) {
-      if (sn[i]==='0') continue;
-      let s = +sn.slice(i,i+len);
-      console.log(sn, s);
-      if(isPrime(s)) {
-        max = Math.max(max, s);
-      }
-    }
-    if (max) return max;
-  }
-  return null;
-}
-
-console.log(findOutPrime(795602326));
-//console.log(findOutPrime(10));
-//console.log(findOutPrime(38));
-//console.log(isPrime(4251512399));
-//12 123 13579
