@@ -12,7 +12,7 @@ const generatePermutate = (arr, set, len, duplicate=false) => {
   return result;
 }
 
-const split = (arr, len) => arr.length<len ? arr : [arr.slice(0, len), ...split(arr.slice(len), len)];
+const split = (arr, len) => arr.length<=len ? [arr] : [arr.slice(0, len), ...split(arr.slice(len), len)];
 
 const row = (num, arr, reverse, r=[...arr[num]]) => !reverse ? r : r.reverse();
 
