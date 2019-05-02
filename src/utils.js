@@ -1,16 +1,7 @@
-const generatePermutate = (arr, set, len, duplicate=false) => {
-  let result = [];
-  for(let i=0;i<set.length;i++){
-    if (!duplicate && arr.includes(set[i])) continue;
-    const nArr = [...arr, set[i]];
-    if (nArr.length===len) {
-      result = [...result, nArr]
-    } else {
-      result = [...result, ...generatePermutate(nArr, set, len, duplicate)]
-    }
-  }
-  return result;
-}
+const generatePermutate = (arr, set, len, duplicate=false) => 
+  set.reduce((acc, v, i, a, n, nArr=[...arr, v])=> 
+    !duplicate && arr.includes(v) ? acc : nArr.length===len ? [...acc, nArr] : [...acc, ...generatePermutate(nArr, set, len, duplicate)]
+  , []);
 
 const split = (arr, len) => arr.length<=len ? [arr] : [arr.slice(0, len), ...split(arr.slice(len), len)];
 
