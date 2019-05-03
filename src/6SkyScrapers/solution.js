@@ -13,11 +13,16 @@ const duplicateCol = arr => {
   }
   return false;
 }
+const satisfy = (arr, v1, v2) => {
+  if (unique(arr).length<MAX) return false;
+  if (v1!=0 && calc(arr)!=v1) return false;
+  if (v2!=0 && calc([...arr].reverse())!=v2) return false;
+  return true;
+}
 const calc = (arr, reverse, tmp=!reverse?[...arr]:[...arr].reverse()) => tmp.reduce((acc, val) => ({ 
   count: acc.count + (val>acc.max?1:0),
   max: Math.max(acc.max, val)
 }), {count:0, max: 0}).count;
-
 const getClues = arr => {
   let [r1,r2,c1,c2] = [[],[],[],[]];
   for(let i=0;i<MAX;i++) {
@@ -28,12 +33,10 @@ const getClues = arr => {
   }
   return [...c1, ...r2, ...c2.reverse(), ...r1.reverse()];
 }
-
 const generatePermutate = (arr, set, len, duplicate=false) => 
   set.reduce((acc, v, i, a, n, nArr=[...arr, v])=> 
     !duplicate && arr.includes(v) ? acc : nArr.length===len ? [...acc, nArr] : [...acc, ...generatePermutate(nArr, set, len, duplicate)]
-  , []);
-
+  , []);  
 let possible = {};
 if (Object.keys(possible).length===0) {
   possible = generatePermutate([], [...PRIMARY], MAX).reduce((acc, val, i, arr, num=calc(val))=>({
@@ -42,63 +45,64 @@ if (Object.keys(possible).length===0) {
     [0]: [...(acc[0]||[]), val],
   }),{})
 }
+const staticPostition = (range, sp = [...PRIMARY].fill(0)) => {
+  if ( range.length===0 ) return sp;
+  if ( range.length===1 ) return [...range[0]];
+  return range.reduce((acc, arr)=> {
+    arr.map((v, i)=> {acc[i] = acc[i]===0 ? arr[i] : ( acc[i]>0 && acc[i] !== arr[i]) ? -1 : acc[i]});
+    return acc;
+  }, sp).map(v=>v<0?0:v);  
+}
+const view = result => console.log(result.map(r=>r.join(', ')).join('\n'));
 
 function solvePuzzle(clues) {
+  console.log(clues);
   const result = [...Array(MAX)].map(v=> [...Array(MAX)].fill(0));
   const [c1, r2, c2, r1] = split(clues, MAX).map((a,i)=>i<2?a:a.reverse());
-  const fillRow = (r, arr) => {
-    arr.map((v, c)=>result[r][c]=v);
+  const fill = (type, index, arr) => {
+    type==='row' ? arr.map((v, c)=>result[index][c]=v) : arr.map((v, r)=>result[r][index]=v);
   }
-  const fillCol = (c, arr) => {
-    arr.map((v, r)=>result[r][c]=v);
-  }
-  const canFillCol = (index, arr) => {
-    for(let i=0;i<MAX;i++) {
-      if (row(i, result).filter((v,i)=>i!=index).includes(arr[i])) 
-        return false;
-    }
+  const canFill = (type, index, arr) => {
+    const fn = type==='row' ? col: row;
+    for(let i=0;i<MAX;i++) 
+      if (fn(i, result).filter((v,i)=>i!=index).includes(arr[i])) return false;
     return true;
   }
-  const canFillRow = (index, arr) => {
-    for(let i=0;i<MAX;i++) {
-      if (col(i, result).filter((v,i)=>i!=index).includes(arr[i]))
-        return false;
+  const markSP = (type, index, arr, hasSP = false) => {
+    for(let k=0;k<arr.length;k++) 
+      if (arr[k]!=0) {
+        let [i,j] = type==='row' ? [index, k] : [k, index];
+        if (result[i][j]===0) {
+          result[i][j] = arr[k];
+          hasSP = true;
+        }
+      }
+    return hasSP;
+  }
+  const greedy = () => {
+    let hasSP = true, q=[], order=[];
+    for(let index=0;index<MAX;index++) {
+      q.push([index, 'row'],[index, 'col'])
     }
-    return true;
+    while(hasSP) {
+      order = [];//delete old order
+      hasSP = false;
+      q.map(([index, type])=>{
+        const [v1,v2] = type==='row' ? [r1[index], r2[index]] : [c1[index], c2[index]];
+        const fn = type==='row' ? row: col;
+        const range = possible[v1].filter(arr=> equalIgnoreZero(fn(index, result), arr) && (v2===0 || calc(arr, true)===v2) );
+        order.push({index, type, range});
+        hasSP = hasSP || markSP(type, index, staticPostition(range));
+      })
+    }
+    return order.filter(a=>a.range.length>1).sort((a,b)=>a.range.length-b.range.length);
   }
-  for(let i=0;i<MAX;i++) {
-    if(r1[i]===1) result[i][0] = MAX;
-    if(r2[i]===1) result[i][MAX-1] = MAX;
-    if(c1[i]===1) result[0][i] = MAX;
-    if(c2[i]===1) result[MAX-1][i] = MAX;
-    if(r1[i]===MAX) fillRow(i, [...PRIMARY]);
-    if(r2[i]===MAX) fillRow(i, [...PRIMARY].reverse());
-    if(c1[i]===MAX) fillCol(i, [...PRIMARY]);
-    if(c2[i]===MAX) fillCol(i, [...PRIMARY].reverse());
-  }
-  let order = [];
-  for(let i=0;i<MAX;i++) {   
-    order.push({
-      index: i,
-      type: 'row', 
-      range: possible[r1[i]].filter(arr=> equalIgnoreZero(row(i, result), arr) && (r2[i]===0 || calc(arr, true)===r2[i]) )
-    },{
-      index: i,
-      type: 'col', 
-      range: possible[c1[i]].filter(arr=> equalIgnoreZero(col(i, result), arr) && (c2[i]===0 || calc(arr, true)===c2[i]) )
-    });
-  }
-  order = order.sort((a,b)=>a.range.length-b.range.length);
+
+  let order = greedy();
+  view(result);
   console.log(order);
 
   let found = false;
-  const satisfy = (arr, v1, v2) => {
-    if (unique(arr).length<MAX) return false;
-    if (v1!=0 && calc(arr)!=v1) return false;
-    if (v2!=0 && calc([...arr].reverse())!=v2) return false;
-    return true;
-  }
-
   const buildSolution = step => {
     if (step>=order.length || found) {
       if (equalIgnoreZero(getClues(result), clues)) {
@@ -108,21 +112,19 @@ function solvePuzzle(clues) {
     }
     let {index, type, range} = order[step];
     const old = type==='row' ? row(index, result) : col(index, result);
-    const [v1,v2] = type==='row' ? [r1[index], r2[index]] : [c1[index], c2[index]];
     if (!old.includes(0)) {
+      const [v1,v2] = type==='row' ? [r1[index], r2[index]] : [c1[index], c2[index]];
       if (satisfy(old, v1, v2)) {
         buildSolution(step+1);  
       }
       return;
     }
-    const canFill = type==='row' ? canFillRow : canFillCol;
-    const fill = type==='row' ? fillRow : fillCol;
-    range = range.filter(arr=>equalIgnoreZero(arr, old) && canFill(index, arr) );
+    range = range.filter(arr=>equalIgnoreZero(arr, old) && canFill(type, index, arr) );
     for(let i=0;i<range.length;i++) {
-      fill(index, range[i]);
+      fill(type, index, range[i]);
       buildSolution(step+1);
       if (found) return;
-      fill(index, old);
+      fill(type, index, old);
     }
   }
   buildSolution(0);
