@@ -66,6 +66,18 @@ function solvePuzzle(clues) {
     }
     return true;
   }
+  const getRegex = (index, type) => {
+    
+    const [fn0,fn1] = type === 'row' ? [row, col] : [col, row];
+    let reg = fn0(index, result);
+    for(let i=0;i<MAX;i++) 
+      if (reg[i]===0) {
+        let cross=fn1(i, result).filter(v=>v).join('');
+        reg[i]=!cross ? `[1-${MAX}]` : `[^ ${cross}]`;
+      }
+    reg = reg.join('');
+    return new RegExp(reg, 'g');
+  }
   for(let i=0;i<MAX;i++) {
     if(r1[i]===1) result[i][0] = MAX;
     if(r2[i]===1) result[i][MAX-1] = MAX;
@@ -81,16 +93,15 @@ function solvePuzzle(clues) {
     order.push({
       index: i,
       type: 'row', 
-      range: possible[r1[i]].filter(arr=> equalIgnoreZero(row(i, result), arr) && (r2[i]===0 || calc(arr, true)===r2[i]) )
+      range: possible[r1[i]].filter(arr=> equalIgnoreZero(row(i, result), arr) && (r2[i]===0 || calc(arr, true)===r2[i]) ),
     },{
       index: i,
       type: 'col', 
-      range: possible[c1[i]].filter(arr=> equalIgnoreZero(col(i, result), arr) && (c2[i]===0 || calc(arr, true)===c2[i]) )
+      range: possible[c1[i]].filter(arr=> equalIgnoreZero(col(i, result), arr) && (c2[i]===0 || calc(arr, true)===c2[i]) ),
     });
   }
   order = order.sort((a,b)=>a.range.length-b.range.length);
   console.log(order);
-
   let found = false;
   const satisfy = (arr, v1, v2) => {
     if (unique(arr).length<MAX) return false;
@@ -115,9 +126,10 @@ function solvePuzzle(clues) {
       }
       return;
     }
-    const canFill = type==='row' ? canFillRow : canFillCol;
+    //const canFill = type==='row' ? canFillRow : canFillCol;
     const fill = type==='row' ? fillRow : fillCol;
-    range = range.filter(arr=>equalIgnoreZero(arr, old) && canFill(index, arr) );
+    const reg = getRegex(index, type);
+    range = range.filter(arr=>reg.test(arr.join('')));
     for(let i=0;i<range.length;i++) {
       fill(index, range[i]);
       buildSolution(step+1);
@@ -179,13 +191,8 @@ var expected3 = [
   [2,4,3,5,6,1,7]
 ];
 
-var clues = [
-  [ 7, 0, 0, 0, 2, 2, 3, 0, 0, 3, 0, 0, 0, 0, 3, 0, 3, 0, 0, 5, 0, 0, 0, 0, 0, 5, 0, 4 ],
-  [ 6, 4, 0, 2, 0, 0, 3, 0, 3, 3, 3, 0, 0, 4, 0, 5, 0, 5, 0, 2, 0, 0, 0, 0, 4, 0, 0, 3 ],
-  [ 0, 0, 0, 5, 0, 0, 3, 0, 6, 3, 4, 0, 0, 0, 3, 0, 0, 0, 2, 4, 0, 2, 6, 2, 2, 2, 0, 0 ],
-  [ 0, 0, 5, 0, 0, 0, 6, 4, 0, 0, 2, 0, 2, 0, 0, 5, 2, 0, 0, 0, 5, 0, 3, 0, 5, 0, 0, 3 ],
-  [ 0, 0, 5, 3, 0, 2, 0, 0, 0, 0, 4, 5, 0, 0, 0, 0, 0, 3, 2, 5, 4, 2, 2, 0, 0, 0, 0, 5 ],
-];
+var clues4= [ 7, 0, 0, 0, 2, 2, 3, 0, 0, 3, 0, 0, 0, 0, 3, 0, 3, 0, 0, 5, 0, 0, 0, 0, 0, 5, 0, 4 ];
+var clues5= [ 6, 4, 0, 2, 0, 0, 3, 0, 3, 3, 3, 0, 0, 4, 0, 5, 0, 5, 0, 2, 0, 0, 0, 0, 4, 0, 0, 3 ];
 
 const draw = (arr, clues=getClues(arr), s1='color:#bd5', s2='color:#fff') => {
   const [c1, r2, c2, r1] = split(clues, MAX).map((a,i)=>i<2?a:a.reverse());
@@ -198,18 +205,21 @@ const draw = (arr, clues=getClues(arr), s1='color:#bd5', s2='color:#fff') => {
 }
 
 export function main() {
-  let t1,t2,t3,t4;
+  //draw(expected3, clues3);
+  let t1,t2, actual;
   t1 = (new Date).getTime();
-  for(let i=0;i<clues.length;i++) {
-    t2 = (new Date).getTime();
-    let actual = solvePuzzle(clues[i]);
-    draw(actual, clues[i]);
-    draw(actual);
-    t3 = (new Date).getTime();
-    console.log(`time to run test ${i}: ${(t3-t2)/1000} s`);
-  }
-  t4 = (new Date).getTime();
-  console.log(`total time : ${(t4-t1)/1000} s`);
+  actual = solvePuzzle(clues5);
+  t2 = (new Date).getTime();
+  console.log(`time to run : ${(t2-t1)/1000} s`);
+  draw(actual, clues5);
+  draw(actual);
+
+  t1 = (new Date).getTime();
+  actual = solvePuzzle(clues4);
+  t2 = (new Date).getTime();
+  console.log(`time to run : ${(t2-t1)/1000} s`);
+  draw(actual, clues4);
+  draw(actual);
 }
 
 //https://www.codewars.com/kata/5679d5a3f2272011d700000d/train/javascript
