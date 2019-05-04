@@ -12,3 +12,11 @@ const col = (num, arr, reverse, r=[...arr.map(r=>r[num])]) => !reverse ? r : r.r
 const unique = arr => [...new Set(arr)];
 
 const duplicate = arr => unique(arr).length!=arr.length;
+
+const equal = (a1,a2) => a1.every((v,i)=>a1[i]===a2[i]);
+
+const equalIgnoreZero = (a1,a2) => a1.every((v,i)=>!(a1[i]*a2[i]) || a1[i]===a2[i]);
+
+const interSection = (a1,a2) => a1.filter(v=>a2.includes(v));
+
+const setDifferent = (a1,a2) => a1.filter(v=>!a2.includes(v));

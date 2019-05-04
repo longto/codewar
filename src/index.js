@@ -1,2 +1,2 @@
-import {main} from './6SkyScrapers/solution';
+import {main} from './6SkyScrapers/solution2';
 main();
