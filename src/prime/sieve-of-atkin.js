@@ -1,53 +1,51 @@
-const MAX = 25000000;
-const prime = [2,3,5];
-const bit = 5;
-const sieve = [...Array((MAX>>bit)+1).fill(0)];
+const MAX =     25000000;
+const prime =   [2,3];
+const bit =     5;
+const sieve =   [...Array((MAX>>bit)+1).fill(0)];
 const mark =    (n, i=n>>bit, j=n-(i<<bit), mask=1<<j) => sieve[i] |= mask;
 const toggle =  (n, i=n>>bit, j=n-(i<<bit), mask=1<<j) => sieve[i] ^= mask;
 const clear =   (n, i=n>>bit, j=n-(i<<bit), mask=1<<j) => sieve[i] &= ~mask;
 const check =   (n, i=n>>bit, j=n-(i<<bit), tmp=sieve[i]) => (tmp>>j)&1;
-const mod60 =   a => a%60;
-
+const mod12 =   a => a%12;
 const view = () => {
     console.log(prime.join(','));
 }
-const mod1 = [1, 13, 17, 29, 37, 41, 49, 53];
-const mod2 = [7, 19, 31, 43];
-const mod3 = [11, 23, 47, 59];
-const screening = ( max, sqrtMax=Math.sqrt(max), n, m) => {
+const screening = ( max=MAX, sqrtMax=Math.sqrt(max) ) => {
     for ( let x=1; x<=sqrtMax; x++ ) {
+        let xx = x*x;
         for ( let y=1; y<=sqrtMax; y++ ) {
-            n = 4*x*x + y*y; 
-            m = mod60(n)
-            ;
-            if ( n < max && mod1.includes(m) ) {
+            let yy = y*y;
+            let n = 4*xx + yy; 
+            let m = n%12;
+            if ( n <= max && (m==1||m==5) ) {
                 toggle(n);
             }
-            n = 3*x*x + y*y; 
-            m = mod60(n);
-            if ( n < max && mod2.includes(m) ) {
+            n = n - xx; 
+            m = n%12;
+            if ( n <= max && m==7 ) {
                 toggle(n);
             }
-            n = 3*x*x - y*y; 
-            m = mod60(n);
-            if ( n < max && mod3.includes(m) ) {
+            n = n - yy - yy; 
+            m = n%12;
+            if ( x > y && n <= max && m==11 ) {
                 toggle(n);
             }
         }
     }
     for ( let x=5; x<=sqrtMax; x++ ) {
         if (check(x)) {
-            for ( let y=x*x; y<max; y+=x*x) {
+            let xx = x*x;
+            for ( let y=xx; y<max; y+=xx) {
                 clear(y);
             }
         }
     }
-    for( let k=5; k<n; k++) {
-        if (check(k)) {
-            prime.push(k);
+    for( let x=5; x<max; x++) {
+        if (check(x)) {
+            prime.push(x);
         }
     }
-    view();
+    //view();
 }
 
 const main = () => {
