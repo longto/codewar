@@ -1,4 +1,4 @@
-const MAX =     25000000;
+const MAX =     500000000;
 const prime =   [2,3];
 const bit =     5;
 const sieve =   [...Array((MAX>>bit)+1).fill(0)];
@@ -45,6 +45,11 @@ const screening = ( max=MAX, sqrtMax=Math.sqrt(max) ) => {
             prime.push(x);
         }
     }
+    let s = [];
+    for( let x=0; x <prime.length; x+=1000 ) {
+        s.push(prime[x]);
+    }
+    console.log(s.join(', '));
     //view();
 }
 
